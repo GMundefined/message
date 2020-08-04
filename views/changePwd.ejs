@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>修改密码</title>
+</head>
+<body>
+  <h1>修改密码</h1>
+  <form action="/user/changePwd" method="POST" onsubmit="return send()">
+    请输入原密码： <input type="password" name="oldPwd" id="oldPwd"><br>
+    请输入新密码： <input type="password" name="newPwd" id="newPwd"><br>
+    <input type="submit" value="确认修改">
+  </form>
+<script src="/js/jquery.min.js"></script>
+<script>
+var oldRight=false; //假设旧密码输入错误
+//判断原密码是否正确
+$('#oldPwd').on('blur',function(){
+  //取旧密码的值
+  var oldPwd=$(this).val().trim();
+  $.ajax({
+    url:'/user/checkPwd?oldPwd='+oldPwd,
+    success:function(res){
+      if(res.status==1){
+        alert('旧密码不正确')
+        oldRight=false;
+        return ;
+      }
+      if(res.status==0){
+        oldRight=true;
+      }
+    }
+  })
+})
+
+//是否可以发送修改密码的请求
+function send(){
+  var newPwd=$('#newPwd').val().trim();
+  if(!newPwd){
+    alert('新密码不能为空')
+    return false;
+  }
+  if(!oldRight){
+    alert('原密码不正确')
+    return false;
+  }
+  return true
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录</title>
+</head>
+<body>
+<form action="/user/login" method="POST" onsubmit="return check();">
+<h1>用户登录</h1>
+<div>
+  用户名： <input type="text" name="username"><span id="span1"></span>
+</div>
+<div>
+  密码： <input type="password" name="password"><span id="span2"></span>
+</div>
+<div>
+  <input type="checkbox" name="remember">一个月内自动登录
+</div>
+<div>
+  <input type="submit" value="登录">
+  <a href="/user/register">没有账号?点我注册</a>
+</div>
+
+</form>
+<script src="/js/jquery.min.js"></script>
+<script>
+//判断表单数据是否合法
+function check(){
+  $('#span1').html('');
+  $('#span2').html('');
+  var username=$('input[name=username]').val().trim()
+  if(username==''){
+    $('#span1').html('用户名不能为空').css('color','red');
+    return false;
+  }
+  var password=$('input[name=password]').val().trim()
+  if(password==''){
+    $('#span2').html('密码不能为空').css('color','red');
+    return false;
+  }
+  return true;
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>内部小论坛</title>
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <style>
+    body{
+      padding: 0 15%;
+      background-color: #ddd;
+    }
+    h1{
+      text-align: center;
+    }
+    textarea{
+      resize: none;
+    }
+    hr{
+      border: 1px dashed red;
+    }
+    .showMsg{
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .out{
+      width: 45%;
+      border: 1px solid red;
+      background-color:pink;
+      border-radius: 5px;
+      margin-top: 15px;
+      padding: 5px 15px 0 15px;
+    }
+    .pager .up{
+      margin: 0;
+    }
+    .last{
+      background-color: #ddd;
+      border: none;
+    }
+    .pager>.active>a{
+      background-color: #aff;
+    }
+    .user{
+      height: 100px;
+      margin-bottom: 10px;
+    }
+    .avatar,.nickname{
+      display: inline-block;
+    }
+    .img{
+      float: left;
+    }
+    .msg{
+      margin-left: 20px;
+      float: left;
+      width: 80%;
+    }
+    .right{
+      float:right;
+    }
+  </style>
+</head>
+<body>
+  <h1>留言吧</h1>
+  <form action="/message/tijiao" method="post">
+    <div class="pull-right">
+      <a href="/user/logout">退出登录</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <a href="/user/center">个人中心</a>
+    </div>
+    <div class="user">
+      <% for(var i=0;i< users.length;i++){ %>
+        <%if(username==users[i].username){%>
+          <div class="avatar">
+            <img src="<%= users[i].avatar %>" height="100px">
+          </div>
+          <div class="nickname"> 
+            <h2><%= users[i].nickname %></h2>
+          </div>
+        <%}%>
+      <%}%>
+    </div>
+   
+    <div class="form-group">
+      <label for="message">留言：</label>
+      <textarea name="message" rows="4" class="form-control" id="message"></textarea>
+    </div>
+    <input type="submit" class="btn btn-info col-xs-offset-11" value="提交">
+  </form>
+  <hr>
+  <ul class="pager up">
+    <li class="<%= current==1?'disabled':'' %>">
+      <a href="/message?page=<%= current==1?1:current-1 %>" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    <%for(var i=0;i<pages;i++){%>
+    <li class="<%= current==i+1?'active':'' %>">
+      <a href="/message?page=<%= i+1 %>">
+        <%= i+1 %>
+      </a>
+    </li>
+    <%}%>
+    <li class="<%= current==pages?'disabled':'' %>">
+      <a href="/message?page=<%= current==pages?current:current+1 %>" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+  <div class="showMsg">
+    <% for(var i=0;i<msg.length;i++){ %>
+      <% for(var j=0;j<users.length;j++){ %>
+        <%if(msg[i].username==users[j].username){%>
+          <div class="out">
+            <div class="img">
+              <img src="<%= users[j].avatar %>" height="50px">
+            </div>
+            <div class="msg">
+              <div><b><%= users[j].nickname %></b>说：</div>
+              <div><%= msg[i].message %></div>
+              <div><%= msg[i].date %></div>
+              <%if(username==users[j].username){%>
+              <div class="pull-right right">
+                <a href="javascript:;" onclick="modify(this)">编辑</a>
+                &nbsp;&nbsp;&nbsp;
+                <a href="javascript:;" onclick="del('<%= msg[i]._id %>')">删除</a>
+              </div>
+              <%}%>
+            </div>
+          </div>
+        <%}%>                      
+      <% } %>
+    <% } %>
+    <div class="out last">
+      <ul class="pager">
+        <li><a href="#">Previous</a></li>
+        <li><a href="#">Next</a></li>
+      </ul>
+    </div>
+  </div>
+  <script src="/js/jquery.min.js"></script>
+  <script>
+    var oldMsg = ""; // 保存旧的留言信息
+    var canSend = false; // 是否可以发送请求
+    var id = ""; // 被修改留言的id
+    
+    // 修改第一步：将信息区域替换成文本域
+    function modify(i){
+      var $div = $(i).parent().prev().prev()
+      // 保存旧留言
+      oldMsg = $div.html();
+      $div.html('<textarea name="message" rows="2" class="form-control" onblur="send(this)"></textarea>');
+      // 自动获取焦点
+      $div.find('textarea').focus()
+    }
+    
+    // 修改第二步：发送请求
+    function send(i){
+      var val = $(i).val().trim()
+      if(val==""){
+        alert("数据不能为空")
+        // 将原来的数据重新填入
+        $(i).parent().html(oldMsg);
+        oldMsg = ""; // 重置全局变量
+        return ;
+      }
+      // 修改数据
+      // 取id
+      var id = $(i).parent().parent().find("a:contains('删除')").attr("onclick")
+      id = id.substring(id.indexOf("'")+1,id.lastIndexOf("'"));
+      // console.log(id)
+      $.ajax({
+        url: "/message/modify",
+        data: {id:id,message:val},
+        method: "post",
+        success: function(result){
+          if(result.status==1){
+            alert(result.msg)
+            return ;
+          }
+          // 修改成功，将文本框替换为新的内容
+          $(i).parent().html(val.replace('\n','<br>'));
+          oldMsg = ""; // 重置
+          alert(result.msg)
+        }
+      })
+    }
+
+    // 删除
+    function del(id){
+      var f = confirm("是否要删除该留言？");
+      if(!f){
+        return ;
+      }
+      // 确认删除
+      $.ajax({
+        url: '/message/del?id='+id,
+        success: function(result){
+          if(result.status==1){
+            alert(result.msg);
+            return ;
+          }
+          // 删除成功
+          location.href = '/'
+        }
+      })
+    }
+  </script>
+</body>
+</html>
